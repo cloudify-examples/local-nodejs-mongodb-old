@@ -1,0 +1,109 @@
+dsl_definitions:
+
+  nodejs_host_fabric_env: &NODEJS_HOST_FABRIC_ENV
+    host_string: { get_input: nodejs_host_ip }
+    user: { get_input: nodejs_host_user_agent }
+    key_filename: { get_input: nodejs_host_public_key_path }
+
+node_types:
+
+  cloudify.nodes.NodeApplication:
+    derived_from: cloudify.nodes.ApplicationModule
+    properties:
+      port:
+        description: application server port
+        type: integer
+        default: { get_input: application_server_port }
+        required: true
+      source_url:
+        description: URL of the application source
+        type: string
+        default: { get_input: application_tarball_url }
+        required: true
+      startup_script:
+        description: nodejs script that starts the server
+        type: string
+        default: { get_input: application_start_up_script }
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/tasks.py
+            task_name:
+              default: install_application
+            fabric_env:
+              default: *NODEJS_HOST_FABRIC_ENV
+        start:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/tasks.py
+            task_name:
+              default: start_application
+            fabric_env:
+              default: *NODEJS_HOST_FABRIC_ENV
+        stop:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/tasks.py
+            task_name:
+              default: stop_application
+            fabric_env:
+              default: *NODEJS_HOST_FABRIC_ENV
+
+  cloudify.nodes.NodeJSServer:
+    derived_from: cloudify.nodes.ApplicationServer
+    properties:
+      source_url:
+        description: the url of the tgz to download
+        type: string
+        default: http://nodejs.org/dist/v0.10.26/node-v0.10.26-linux-x64.tar.gz
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/tasks.py
+            task_name:
+              default: install_nodejs
+            fabric_env:
+              default: *NODEJS_HOST_FABRIC_ENV
+
+relationships:
+
+  cloudify.relationships.node_connected_to_mongo_db:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        postconfigure:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/tasks.py
+            task_name:
+              default: set_mongo_url
+            fabric_env:
+              default: *NODEJS_HOST_FABRIC_ENV
+            task_properties:
+              default:
+                ip: { get_input: mongo_host_ip }
+
+  cloudify.relationships.node_application_depends_on_nodejs:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/tasks.py
+            task_name:
+              default: set_nodejs_root
+            fabric_env:
+              default: *NODEJS_HOST_FABRIC_ENV

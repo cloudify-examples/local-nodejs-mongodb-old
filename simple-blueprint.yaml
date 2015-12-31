@@ -1,0 +1,73 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+description: >
+  This blueprint uses the cloudify fabric (SSH) plugin to install a
+  mongo database, node, and a nodejs application. It is called simple,
+  because it sets up no other infrastructure needed to support the
+  application. You need to provide the IP, SSH key, and username of
+  the machine where you want to install Mongo, and Node/Node
+  application. It's fine for them all to be on the same machine.
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.3/types.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.3/plugin.yaml
+  - types/node.yaml
+  - types/mongo.yaml
+
+inputs:
+
+  mongo_host_ip:
+    type: string
+    default: localhost
+
+  nodejs_host_ip:
+    type: string
+    default: localhost
+
+  mongo_host_user_agent:
+    type: string
+    default: centos
+
+  nodejs_host_user_agent:
+    type: string
+    default: centos
+
+  mongo_host_public_key_path:
+    type: string
+    default: '~/.ssh/id_rsa.pub'
+
+  nodejs_host_public_key_path:
+    type: string
+    default: '~/.ssh/id_rsa.pub'
+
+  mongo_port:
+    type: integer
+    default: 27017
+
+  application_server_port:
+    type: integer
+    default: 8080
+
+  application_tarball_url:
+    type: string
+    default: https://github.com/cloudify-cosmo/nodecellar/archive/master.tar.gz
+
+  application_start_up_script:
+    type: string
+    default: server.js
+
+node_templates:
+
+  application:
+    type: cloudify.nodes.NodeApplication
+    relationships:
+      - type: cloudify.relationships.node_connected_to_mongo_db
+        target: mongo
+      - type: cloudify.relationships.node_application_depends_on_nodejs
+        target: nodejs
+
+  nodejs:
+    type: cloudify.nodes.NodeJSServer
+
+  mongo:
+    type: cloudify.nodes.MongoDatabase
