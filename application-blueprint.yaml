@@ -34,11 +34,11 @@ inputs:
 
   mongo_host_public_key_path:
     type: string
-    default: '~/.ssh/id_rsa.pub'
+    default: '~/.ssh/cfy_local_keypair.pem'
 
   nodejs_host_public_key_path:
     type: string
-    default: '~/.ssh/id_rsa.pub'
+    default: '~/.ssh/cfy_local_keypair.pem'
 
   mongo_port:
     type: integer

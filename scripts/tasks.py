@@ -111,7 +111,11 @@ def install_package(package):
     command = '{0} -y install {1}'.format(preferred_package_manager, package)
 
     with cd(cloudify_temp_directory):
-        sudo(command)
+        try:
+            sudo(command)
+        except FabricTaskError as e:
+            if 'apt-get update' in str(e):
+                sudo('apt-get update')
 
     return check_if_package_installed(preferred_package_manager, package)
 

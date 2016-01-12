@@ -1,0 +1,332 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+description: >
+  This blueprint uses the cloudify fabric (SSH) plugin to install a
+  mongo database, node, and a nodejs application. It is called simple,
+  because it sets up no other infrastructure needed to support the
+  application. You need to provide the IP, SSH key, and username of
+  the machine where you want to install Mongo, and Node/Node
+  application. It's fine for them all to be on the same machine.
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.3/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/1.3/plugin.yaml
+
+inputs:
+
+  application_port:
+    type: string
+    default: 8080
+
+  mongo_port:
+    type: string
+    default: 27017
+
+  mongo_api_port:
+    type: string
+    default: 28017
+
+  keystone_username:
+    type: string
+
+  keystone_password:
+    type: string
+
+  keystone_tenant_name:
+    type: string
+
+  keystone_url:
+    type: string
+
+  region:
+    type: string
+
+  nova_url:
+    type: string
+
+  neutron_url:
+    type: string
+
+  external_network_name:
+    type: string
+
+  use_existing_router:
+    type: boolean
+    default: false
+
+  router_name:
+    type: string
+    default: cfy_local_router
+
+  use_existing_network:
+    type: boolean
+    default: false
+
+  network_name:
+    type: string
+    default: cfy_local_network
+
+  use_existing_subnet:
+    type: boolean
+    default: false
+
+  subnet_name:
+    type: string
+    default: cfy_local_subnet
+
+  use_existing_port_for_database:
+    type: boolean
+    default: false
+
+  database_port_name:
+    type: string
+    default: cfy_local_database_port
+
+  use_existing_security_group_for_database:
+    type: boolean
+    default: false
+
+  database_security_group_name:
+    type: string
+    default: cfy_local_database_security_group
+
+  use_existing_port_for_application:
+    type: boolean
+    default: false
+
+  application_port_name:
+    type: string
+    default: cfy_local_application_port
+
+  use_existing_security_group_for_application:
+    type: boolean
+    default: false
+
+  application_security_group_name:
+    type: string
+    default: cfy_local_application_security_group
+
+  use_existing_keypair:
+    type: boolean
+    default: false
+
+  keypair_name:
+    type: string
+    default: cfy_local_keypair
+
+  ssh_key_filename:
+    type: string
+    default: ~/.ssh/cfy_local_keypair.pem
+
+  use_existing_server_for_database:
+    type: boolean
+    default: false
+
+  database_server_name:
+    type: string
+    default: cfy_local_database_server
+
+  database_server_image_id:
+    type: string
+
+  database_server_flavor_id:
+    type: string
+
+  use_existing_server_for_application:
+    type: boolean
+    default: false
+
+  application_server_name:
+    type: string
+    default: cfy_local_application_server
+
+  application_server_image_id:
+    type: string
+
+  application_server_flavor_id:
+    type: string
+
+dsl_definitions:
+  openstack_configuration: &openstack_configuration
+    username: { get_input: keystone_username }
+    password: { get_input: keystone_password }
+    tenant_name: { get_input: keystone_tenant_name }
+    auth_url: { get_input: keystone_url }
+    region: { get_input: region }
+    nova_url: { get_input: nova_url }
+    neutron_url: { get_input: neutron_url }
+
+node_templates:
+
+  application_server_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      floatingip:
+        floating_network_name: { get_input: external_network_name }
+      openstack_config: *openstack_configuration
+
+  database_server_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      floatingip:
+        floating_network_name: { get_input: external_network_name }
+      openstack_config: *openstack_configuration
+
+  application_host:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config: *openstack_configuration
+      use_external_resource: { get_input: use_existing_server_for_application }
+      resource_id: { get_input: application_server_name }
+      install_agent: false
+      server:
+        image: { get_input: application_server_image_id }
+        flavor: { get_input: application_server_flavor_id }
+      management_network_name: { get_property: [network, resource_id] }
+    relationships:
+      - target: keypair
+        type: cloudify.openstack.server_connected_to_keypair
+      - target: application_server_ip
+        type: cloudify.openstack.server_connected_to_floating_ip
+      - target: application_port
+        type: cloudify.openstack.server_connected_to_port
+
+  database_host:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config: *openstack_configuration
+      use_external_resource: { get_input: use_existing_server_for_database }
+      resource_id: { get_input: database_server_name }
+      install_agent: false
+      server:
+        image: { get_input: database_server_image_id }
+        flavor: { get_input: database_server_flavor_id }
+      management_network_name: { get_property: [network, resource_id] }
+    relationships:
+      - target: keypair
+        type: cloudify.openstack.server_connected_to_keypair
+      - target: database_server_ip
+        type: cloudify.openstack.server_connected_to_floating_ip
+      - target: database_port
+        type: cloudify.openstack.server_connected_to_port
+
+  keypair:
+    type: cloudify.openstack.nodes.KeyPair
+    properties:
+      use_external_resource: { get_input: use_existing_keypair }
+      resource_id: { get_input: keypair_name }
+      private_key_path: { get_input: ssh_key_filename }
+      openstack_config: *openstack_configuration
+
+  application_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_configuration
+      use_external_resource: { get_input: use_existing_port_for_application }
+      resource_id: { get_input: application_port_name }
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: network
+      - type: cloudify.relationships.depends_on
+        target: subnet
+      - type: cloudify.openstack.port_connected_to_security_group
+        target: application_security_group
+
+  application_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_configuration
+      use_external_resource: { get_input: use_existing_security_group_for_application }
+      resource_id: { get_input: application_security_group_name }
+      security_group:
+        description: Security group for Nodejs-Application VMs
+      rules:
+        - port: 22
+          remote_ip_prefix: { get_property: [subnet, subnet, cidr] }
+        - port: { get_input: application_port }
+          remote_ip_prefix: { get_property: [subnet, subnet, cidr] }
+
+  database_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_configuration
+      use_external_resource: { get_input: use_existing_port_for_database }
+      resource_id: { get_input: database_port_name }
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: network
+      - type: cloudify.relationships.depends_on
+        target: subnet
+      - type: cloudify.openstack.port_connected_to_security_group
+        target: database_security_group
+
+  database_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_configuration
+      use_external_resource: { get_input: use_existing_security_group_for_database }
+      resource_id: { get_input: database_security_group_name }
+      security_group:
+        description: Security group for Nodejs-Application VMs
+      rules:
+        - port: 22
+          remote_ip_prefix: { get_property: [subnet, subnet, cidr] }
+        - port: { get_input: mongo_port }
+          remote_ip_prefix: { get_property: [subnet, subnet, cidr] }
+        - port: { get_input: mongo_api_port }
+          remote_ip_prefix: { get_property: [subnet, subnet, cidr] }
+
+  subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      use_external_resource: { get_input: use_existing_subnet }
+      resource_id: { get_input: subnet_name }
+      subnet:
+        ip_version: 4
+        cidr: 10.67.79.0/24
+      openstack_config: *openstack_configuration
+    relationships:
+      - target: network
+        type: cloudify.relationships.contained_in
+      - target: router
+        type: cloudify.openstack.subnet_connected_to_router
+
+  network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      use_external_resource: { get_input: use_existing_network }
+      resource_id: { get_input: network_name }
+      openstack_config: *openstack_configuration
+
+  router:
+    type: cloudify.openstack.nodes.Router
+    properties:
+      use_external_resource: { get_input: use_existing_router }
+      resource_id: { get_input: router_name }
+      openstack_config: *openstack_configuration
+    relationships:
+      - target: external_network
+        type: cloudify.relationships.connected_to
+
+  external_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      use_external_resource: true
+      resource_id: { get_input: external_network_name }
+      openstack_config: *openstack_configuration
+
+outputs:
+
+  application:
+    description: Web Application Connection Settings
+    value:
+      nodejs_host_ip: { get_attribute: [ application_server_ip, floating_ip_address ] }
+      application_server_port: { get_input: application_port }
+      nodejs_host_public_key_path: { get_property: [ keypair, private_key_path ] }
+
+  database:
+    description: Database Connection Settings
+    value:
+      mongo_host_ip: { get_attribute: [ database_server_ip, floating_ip_address ] }
+      mongo_port: { get_input: mongo_port }
+      mongo_host_public_key_path: { get_property: [ keypair, private_key_path ] }
