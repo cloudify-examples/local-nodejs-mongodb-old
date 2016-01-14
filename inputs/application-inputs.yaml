@@ -1,21 +1,21 @@
-## This is a inputs file for the application-blueprint.yaml blueprint.
-## You can leave this as is if you are doing a local install or on remote systems that are not created by the aws-ec2-blueprint.yaml or openstack-blueprint.yaml.
+# This is a inputs file for the application-blueprint.yaml blueprint.
+# You can leave this as is if you are doing a local install or on remote systems that are not created by the aws-ec2-blueprint.yaml or openstack-blueprint.yaml.
 
-## If you are using AWS or Openstack, you'll want to replace these with the outputs of the `cfy local outputs` command.
-## This is the last output after running the infrastructure install workflow.
-# mongo_host_ip: localhost
-# nodejs_host_ip: localhost
-# mongo_host_public_key_path: ~/.ssh/cfy_local_keypair.pem
-# nodejs_host_public_key_path: ~/.ssh/cfy_local_keypair.pem
+# If you are using AWS or Openstack, you'll want to replace these with the outputs of the `cfy local outputs` command.
+# This is the last output after running the infrastructure install workflow.
+#mongo_host_ip: localhost
+#nodejs_host_ip: localhost
+#mongo_host_public_key_path: ~/.ssh/cfy_local_keypair.pem
+#nodejs_host_public_key_path: ~/.ssh/cfy_local_keypair.pem
 
-## This really depends on your local linux system or on your Openstack image or AWS AMI:
-# mongo_host_user_agent: centos
-# nodejs_host_user_agent: centos
+# This really depends on your local linux system or on your Openstack image or AWS AMI:
+#mongo_host_user_agent: centos
+#nodejs_host_user_agent: centos
 
-## You may have changed these in your inputs to Openstack/AWS blueprint.
-# mongo_port: 27017
-# application_server_port: 8080
+# You may have changed these in your inputs to Openstack/AWS blueprint.
+#mongo_port: 27017
+#application_server_port: 8080
 
-## If you want to use something other than nodecellar, that's an option here.
-# application_tarball_url: https://github.com/cloudify-cosmo/nodecellar/archive/master.tar.gz
-# application_start_up_script: server.js
+# If you want to use something other than nodecellar, that's an option here.
+#application_tarball_url: https://github.com/cloudify-cosmo/nodecellar/archive/master.tar.gz
+#application_start_up_script: server.js

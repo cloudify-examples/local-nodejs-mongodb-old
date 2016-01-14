@@ -1,53 +1,53 @@
-## This is an inputs file for the openstack-blueprint.yaml. Many of these inputs have default values in the blueprint itself.
-## However, there are some that have no defaults and you will need to fill them out with your own values, i.e. your credentials.
+# This is an inputs file for the openstack-blueprint.yaml. Many of these inputs have default values in the blueprint itself.
+# However, there are some that have no defaults and you will need to fill them out with your own values, i.e. your credentials.
 
-## You need to provide these. There's no way I can know the default values.
+# You need to provide these. There's no way I can know the default values.
 keystone_username:
 keystone_password:
 keystone_tenant_name:
 keystone_url:
 region:
 
-## It's possible that in your version of Openstack you can use the keystone client for everything.
-## If you need a separate nova or neutron client, provide the API endpoint for those clients here:
+# It's possible that in your version of Openstack you can use the keystone client for everything.
+# If you need a separate nova or neutron client, provide the API endpoint for those clients here:
 nova_url: ''
 neutron_url: ''
 
-## Every Openstack tenant has an external network. Often it is just "external", but I really can't guarantee it:
+# Every Openstack tenant has an external network. Often it is just "external", but I really can't guarantee it:
 external_network_name:
 
-## Every Account has a different set of image ids and flavor ids. Check your Account.
+# Every Account has a different set of image ids and flavor ids. Check your Account.
 database_server_image_id:
 database_server_flavor_id:
 application_server_image_id:
 application_server_flavor_id:
 
-## The following values have default values, but if you want to use an existing Instance,
-## Network, Port, Security Group or IP or Keypair, etc, I've exposed them as inputs for you.
-# use_existing_router: false
-# router_name: cfy_local_router
-# use_existing_network: false
-# network_name: cfy_local_network
-# use_existing_subnet: false
-# subnet_name: cfy_local_subnet
-# use_existing_port_for_database: false
-# database_port_name: cfy_local_database_port
-# use_existing_security_group_for_database: false
-# database_security_group_name: cfy_local_database_security_group
-# use_existing_port_for_application: false
-# application_port_name: cfy_local_application_port
-# use_existing_security_group_for_application: false
-# application_security_group_name: cfy_local_application_security_group
-# use_existing_keypair: false
-# keypair_name: cfy_local_keypair
-# ssh_key_filename: ~/.ssh/cfy_local_keypair.pem
-# use_existing_server_for_database: false
-# database_server_name: cfy_local_database_server
-# use_existing_server_for_application: false
-# application_server_name: cfy_local_application_server
+# The following values have default values, but if you want to use an existing Instance,
+# Network, Port, Security Group or IP or Keypair, etc, I've exposed them as inputs for you.
+#use_existing_router: false
+#router_name: cfy_local_router
+#use_existing_network: false
+#network_name: cfy_local_network
+#use_existing_subnet: false
+#subnet_name: cfy_local_subnet
+#use_existing_port_for_database: false
+#database_port_name: cfy_local_database_port
+#use_existing_security_group_for_database: false
+#database_security_group_name: cfy_local_database_security_group
+#use_existing_port_for_application: false
+#application_port_name: cfy_local_application_port
+#use_existing_security_group_for_application: false
+#application_security_group_name: cfy_local_application_security_group
+#use_existing_keypair: false
+#keypair_name: cfy_local_keypair
+#ssh_key_filename: ~/.ssh/cfy_local_keypair.pem
+#use_existing_server_for_database: false
+#database_server_name: cfy_local_database_server
+#use_existing_server_for_application: false
+#application_server_name: cfy_local_application_server
 
-## If you will change these in the application-blueprint.yaml, and in the tasks.py, then you should change these.
-## Most likely, not going to be the first thing you consider changing.
-# application_port: 8080
-# mongo_port: 27017
-# mongo_api_port: 28017
+# If you will change these in the application-blueprint.yaml, and in the tasks.py, then you should change these.
+# Most likely, not going to be the first thing you consider changing.
+#application_port: 8080
+#mongo_port: 27017
+#mongo_api_port: 28017
