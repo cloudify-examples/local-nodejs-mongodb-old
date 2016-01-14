@@ -13,11 +13,14 @@
 #  * See the License for the specific language governing permissions and
 #  * limitations under the License.
 
+*** I don't quite understand why there's :return: everywhere.
+
+
 import os
 from urlparse import urlparse
 from time import sleep
 
-from fabric.api import cd, run, sudo, prefix
+import fabric.api as fab
 
 from cloudify import ctx
 from fabric_plugin.tasks import FabricTaskError
@@ -32,13 +35,13 @@ def get_preferred_downloader():
         preferred_downloader = ''
 
         try:
-            preferred_downloader = run('which wget')
+            preferred_downloader = fab.run('which wget')
         except FabricTaskError:
             pass
 
         if not preferred_downloader:
             try:
-                preferred_downloader = run('which curl')
+                preferred_downloader = fab.run('which curl')
             except FabricTaskError:
                 pass
 
@@ -56,13 +59,13 @@ def get_preferred_package_manager():
         preferred_package_manager = ''
 
         try:
-            preferred_package_manager = run('which apt-get')
+            preferred_package_manager = fab.run('which apt-get')
         except FabricTaskError:
             pass
 
         if not preferred_package_manager:
             try:
-                preferred_package_manager = run('which yum')
+                preferred_package_manager = fab.run('which yum')
             except FabricTaskError:
                 pass
 
@@ -76,12 +79,11 @@ def download_archive_and_save(filename, working_directory):
 
     command = get_download_command(filename, ctx.node.properties['source_url'])
 
-    with cd(working_directory):
-        run(command)
+    with fab.cd(working_directory):
+        fab.run(command)
 
     ctx.instance.runtime_properties['archive_path'] = \
-        os.path.join(working_directory,
-                     filename)
+        os.path.join(working_directory, filename)
 
 
 def get_download_command(filename, source):
@@ -110,12 +112,12 @@ def install_package(package):
 
     command = '{0} -y install {1}'.format(preferred_package_manager, package)
 
-    with cd(cloudify_temp_directory):
+    with fab.cd(cloudify_temp_directory):
         try:
-            sudo(command)
+            fab.sudo(command)
         except FabricTaskError as e:
             if 'apt-get update' in str(e):
-                sudo('apt-get update')
+                fab.sudo('apt-get update')
 
     return check_if_package_installed(preferred_package_manager, package)
 
@@ -127,12 +129,13 @@ def check_if_package_installed(package_manager, package):
     elif 'yum' in package_manager:
         command = 'yum list installed {0}'.format(package)
     else:
-        raise NonRecoverableError('Only Yum and Apt-get are supported right now.')
+        raise NonRecoverableError(
+            'Only Yum and Apt-get are supported right now.')
 
     installed = False
 
     try:
-        installed = run(command)
+        installed = fab.run(command)
     except FabricTaskError:
         pass
 
@@ -143,9 +146,10 @@ def check_if_package_installed(package_manager, package):
 
 
 def run_bg(cmd):
-    return run('screen -d -m {0}; sleep 1'.format(cmd))
+    return fab.run('screen -d -m {0}; sleep 1'.format(cmd))
 
-##TODO: Add get preferred extractor function
+# TODO: Add get preferred extractor function
+
 
 def extract_to_path(archive_file, working_directory, save_directory=None):
 
@@ -158,22 +162,24 @@ def extract_to_path(archive_file, working_directory, save_directory=None):
         extract_command = 'tar xzvf {0}'.format(archive_file)
         extract_into = '-C {0}'.format(save_directory)
     else:
-        raise NonRecoverableError(
-            'Only .zip, .tar.gz, and .tgz are accepted.')
+        raise NonRecoverableError('Only .zip, .tar.gz, and .tgz are accepted.')
 
-    with cd(working_directory):
+    with fab.cd(working_directory):
 
         if save_directory:
-            run('[[ -d {0} ]] || mkdir {0}'.format(save_directory))
+            fab.run('[[ -d {0} ]] || mkdir {0}'.format(save_directory))
             extract_command = '{0} {1}'.format(extract_command, extract_into)
 
-        list_of_extracted_files = run(extract_command)
+        list_of_extracted_files = fab.run(extract_command)
         ctx.logger.info('extracted {0}'.format(archive_file))
-        run('rm {0}'.format(archive_file))
-        ctx.logger.info('deleted the archive file {0} after extraction'.format(archive_file))
+        fab.run('rm {0}'.format(archive_file))
+        ctx.logger.info('deleted the archive file {0} after extraction'.format(
+            archive_file))
 
-    extracted_files_root = min(list_of_extracted_files.split('\n'), key=len)[:-1]
-    ctx.logger.info('The root of extracted files: {0}'.format(extracted_files_root))
+    extracted_files_root = min(
+        list_of_extracted_files.split('\n'), key=len)[:-1]
+    ctx.logger.info('The root of extracted files: {0}'.format(
+        extracted_files_root))
     return extracted_files_root
 
 
@@ -192,8 +198,8 @@ def get_response_code(host, port):
         raise NonRecoverableError(
             'Neither curl nor wget available on target system.')
 
-    with cd(cloudify_temp_directory):
-        response_code = run(command)
+    with fab.cd(cloudify_temp_directory):
+        response_code = fab.run(command)
 
     return response_code
 
@@ -203,10 +209,8 @@ def wait_for_server(host, port, checks=120, interval=1):
     for x in range(0, checks):
         x += 1
         response_code = get_response_code(host, port)
-        ctx.logger.info(
-            '[GET] http://localhost:{0} {1}'
-            .format(port, response_code)
-        )
+        ctx.logger.info('[GET] http://localhost:{0} {1}'.format(
+            port, response_code))
         if str(200) in response_code:
             return True
         else:
@@ -215,10 +219,8 @@ def wait_for_server(host, port, checks=120, interval=1):
 
 
 def kill_process():
-    command = 'kill -9 {0}'.format(
-        ctx.instance.runtime_properties['pid']
-    )
-    sudo(command)
+    command = 'kill -9 {0}'.format(ctx.instance.runtime_properties['pid'])
+    fab.sudo(command)
 
 
 def install_mongo():
@@ -231,7 +233,7 @@ def install_mongo():
     root_path_directory_name = 'mongo_db'
     mongo_data_directory_name = 'data'
 
-    run('[[ -d {0} ]] || mkdir {0}'.format(cloudify_temp_directory))
+    fab.run('[[ -d {0} ]] || mkdir {0}'.format(cloudify_temp_directory))
 
     parsed_url = urlparse(ctx.node.properties['source_url'])
     filename = os.path.basename(parsed_url.path)
@@ -240,14 +242,13 @@ def install_mongo():
         binaries_directory_name, _ = os.path.splitext(binaries_directory_name)
 
     download_archive_and_save(filename, cloudify_temp_directory)
-    archive_file = \
-        os.path.basename(
-            ctx.instance.runtime_properties['archive_path'])
+    archive_file = os.path.basename(
+        ctx.instance.runtime_properties['archive_path'])
     extract_to_path(archive_file, cloudify_temp_directory)
 
-    with cd(cloudify_temp_directory):
-        run('[[ -d {0} ]] || mkdir {0}'.format(root_path_directory_name))
-        run('[[ -d {0} ]] || mkdir {0}'.format(mongo_data_directory_name))
+    with fab.cd(cloudify_temp_directory):
+        fab.run('[[ -d {0} ]] || mkdir {0}'.format(root_path_directory_name))
+        fab.run('[[ -d {0} ]] || mkdir {0}'.format(mongo_data_directory_name))
 
     ctx.instance.runtime_properties['mongo_root_path'] = os.path.join(
         cloudify_temp_directory, root_path_directory_name)
@@ -266,16 +267,16 @@ def start_mongo():
     install_package('screen')
 
     actual_command = '{0}/bin/mongod --port {1} --dbpath {2} --rest ' \
-                     '--journal --shardsvr --smallfiles' \
-                     .format(ctx.instance.runtime_properties['mongo_binaries_path'],
-                             ctx.node.properties['port'],
-                             ctx.instance.runtime_properties['mongo_data_path'])
+                     '--journal --shardsvr --smallfiles'.format(
+                         ctx.instance.runtime_properties['mongo_binaries_path'],  # NOQA
+                         ctx.node.properties['port'],
+                         ctx.instance.runtime_properties['mongo_data_path'])
 
     ctx.logger.info('running {0}'.format(actual_command))
 
-    with cd(cloudify_temp_directory):
+    with fab.cd(cloudify_temp_directory):
         run_bg(actual_command)
-        pid = run('pgrep mongod')
+        pid = fab.run('pgrep mongod')
 
     ctx.logger.info('{0}'.format(pid))
 
@@ -298,7 +299,7 @@ def stop_mongo():
 def set_mongo_url(ip=None):
 
     ctx.source.instance.runtime_properties['mongo_ip_address'] = \
-        ip if ip else ctx.target.instance.host_ip
+        ip or ctx.target.instance.host_ip
     ctx.source.instance.runtime_properties['mongo_port'] = \
         ctx.target.node.properties['port']
 
@@ -310,7 +311,7 @@ def install_nodejs():
 
     ctx.logger.info('Installing NodeJS')
 
-    run('[[ -d {0} ]] || mkdir {0}'.format(cloudify_temp_directory))
+    fab.run('[[ -d {0} ]] || mkdir {0}'.format(cloudify_temp_directory))
 
     parsed_url = urlparse(ctx.node.properties['source_url'])
     filename = os.path.basename(parsed_url.path)
@@ -319,9 +320,8 @@ def install_nodejs():
         binaries_directory_name, _ = os.path.splitext(binaries_directory_name)
 
     download_archive_and_save(filename, cloudify_temp_directory)
-    archive_file = \
-        os.path.basename(
-            ctx.instance.runtime_properties['archive_path'])
+    archive_file = os.path.basename(
+        ctx.instance.runtime_properties['archive_path'])
     extract_to_path(archive_file, cloudify_temp_directory)
 
     ctx.instance.runtime_properties['nodejs_binaries_path'] = os.path.join(
@@ -345,7 +345,7 @@ def install_application():
 
     ctx.logger.info('Installing Application')
 
-    run('[[ -d {0} ]] || mkdir {0}'.format(cloudify_temp_directory))
+    fab.run('[[ -d {0} ]] || mkdir {0}'.format(cloudify_temp_directory))
 
     parsed_url = urlparse(ctx.node.properties['source_url'])
     filename = os.path.basename(parsed_url.path)
@@ -355,8 +355,7 @@ def install_application():
 
     download_archive_and_save(filename, cloudify_temp_directory)
     archive_file = \
-        os.path.basename(
-            ctx.instance.runtime_properties['archive_path'])
+        os.path.basename(ctx.instance.runtime_properties['archive_path'])
     application_source = extract_to_path(archive_file, cloudify_temp_directory)
 
     ctx.logger.info('application source = {0}'.format(application_source))
@@ -364,11 +363,12 @@ def install_application():
     ctx.instance.runtime_properties['application_source'] = os.path.join(
         cloudify_temp_directory, application_source)
 
-    nodejs_binaries_dir = ctx.instance.runtime_properties['nodejs_binaries_path']
+    nodejs_binaries_dir = \
+        ctx.instance.runtime_properties['nodejs_binaries_path']
     command = '{0}/bin/npm install'.format(nodejs_binaries_dir)
 
-    with cd(ctx.instance.runtime_properties['application_source']):
-        run(command)
+    with fab.cd(ctx.instance.runtime_properties['application_source']):
+        fab.run(command)
 
     ctx.logger.info('Installed Application')
 
@@ -387,14 +387,14 @@ def start_application():
               .format(ctx.instance.runtime_properties['mongo_ip_address'],
                       ctx.instance.runtime_properties['mongo_port'],
                       ctx.node.properties['port'])
-    with prefix('export {0}'.format(exports)):
+    with fab.prefix('export {0}'.format(exports)):
         run_bg(command)
-        pid = run('pgrep node')
-    if wait_for_server('localhost',
-                       ctx.node.properties['port']):
+        pid = fab.run('pgrep node')
+    if wait_for_server('localhost', ctx.node.properties['port']):
         ctx.instance.runtime_properties['pid'] = pid
     else:
-        raise NonRecoverableError('Unable to verify that node application started')
+        raise NonRecoverableError(
+            'Unable to verify that node application started')
 
 
 def stop_application():
