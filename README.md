@@ -1,12 +1,14 @@
 # cfy-local-nodejs-mongodb
 
-## Summary
-
 Deploys any NodeJS/Mongo Application using cfy local on AWS and Openstack.
 
-A bit more detailed explanation:
+## Summary
+
+*** dunno if you want to explain what a blueprint is here. maybe ref to docs?
 
 In Cloudify, you describe applications and their infrastructure in blueprints. Blueprints are files that are supported by scripts and other resources in a single archive. You can also import other code using plugins.
+
+*** what's local mode? I'd again ref to docs.
 
 cfy local refers to executing Cloudify blueprints in local mode.
 
@@ -23,11 +25,13 @@ The default application is the [Nodecellar](http://coenraets.org/blog/2012/10/no
 
 * RHEL 7, Centos 7, or Ubuntu 14.04
 * Python 2.7
-* Cloudify
+* Cloudify CLI
 
-Additionally, you will need probably unzip and curl if you install Cloudify with the below instructions.
+Additionally, you will need unzip and curl if you install Cloudify with the below instructions.
 
 ## How to Install
+
+*** why do we need this? a prerequisite to any blueprint should be that Cloudify's CLI is installed...
 
 First, Install Cloudify: http://docs.getcloudify.org/3.3.0/intro/installation/
 
@@ -41,6 +45,8 @@ source /opt/cfy/env/bin/activate
 
 Get this example:
 
+*** isn't this the wrong link? It's from EarthmanT's repo?
+
 ```bash
 curl -L -o cfy-local-nodejs-mongodb.zip https://github.com/EarthmanT/cfy-local-nodejs-mongodb/archive/master.zip
 unzip cfy-local-nodejs-mongodb.zip
@@ -48,7 +54,7 @@ unzip cfy-local-nodejs-mongodb.zip
 
 ### Set up a local environment (no IaaS):
 
-Create keys local:
+Create local ssh keys:
 
 ```bash
 ssh-keygen
@@ -61,13 +67,15 @@ ssh-keygen
 cat ~/.ssh/cfy_local_keypair.pem > ~/.ssh/authorized_keys
 ```
 
-Running the Blueprint:
+Installing the Blueprint:
 
 ```bash
 cd cfy-local-nodejs-mongodb-master
 cfy local init --install-plugins -p simple-blueprint.yaml
 cfy local execute -w install --task-retries=9 --task-retry-interval=10
 ```
+
+*** where is the blueprint installed? what if you're running it on your laptop? What is "YourIPAddress"?
 
 Then go to http://YourIPAddress:8080.
 
@@ -98,18 +106,25 @@ You'll need to make some minor adjustments to the inputs file to provide your ow
 
 Now, execute the install workflow for the infrastructure:
 
+*** why do we have to provide task-retry flags?
+
 For AWS:
 
 ```bash
-(cd infrastructure && cfy local init --install-plugins -p ../aws-ec2-blueprint.yaml -i inputs.yaml && cfy local execute -w install --task-retries=9 --task-retry-interval=10 && cfy local outputs)
+cd infrastructure &&
+cfy local init --install-plugins -p ../aws-ec2-blueprint.yaml -i inputs.yaml &&cfy local execute -w install --task-retries=9 --task-retry-interval=10 && 
+cfy local outputs
 ```
 OR, for Openstack:
 
 ```bash
-(cd infrastructure && cfy local init --install-plugins -p ../openstack.yaml -i inputs.yaml && cfy local execute -w install --task-retries=9 --task-retry-interval=10 && cfy local outputs)
+cd infrastructure &&
+cfy local init --install-plugins -p ../openstack.yaml -i inputs.yaml &&
+cfy local execute -w install --task-retries=9 --task-retry-interval=10 &&
+cfy local outputs
 ```
 
-When the command is finished you'll see the outputs from that blueprint. You'll notice that they correspond to the inputs on the applcation blueprint:
+When the execution is finished you'll see the outputs from that blueprint. You'll notice that they correspond to the inputs on the applcation's blueprint:
 
 ```
 {
@@ -131,21 +146,28 @@ Create the inputs file:
 cp inputs/application-inputs.yaml application/inputs.yaml
 ```
 
-Now take the values from the outputs of the last command, and replace them in application/inputs.yaml. By default, you should only need to replace the nodejs_host_ip and mongo_host_ip values.
+Now take the values from the outputs of the last command, and replace them in application/inputs.yaml. By default, you should only need to replace the `nodejs_host_ip` and `mongo_host_ip` values.
 
 Then run:
 ```bash
-(cd application && cfy local init --install-plugins -p ../application-blueprint.yaml -i inputs.yaml  && cfy local execute -w install --task-retries=9 --task-retry-interval=10 && cfy local outputs)
+cd application &&
+cfy local init --install-plugins -p ../application-blueprint.yaml -i inputs.yaml &&
+cfy local execute -w install --task-retries=9 --task-retry-interval=10 &&
+cfy local outputs)
 ```
 
-To see the application, you can go to http://[THE APPLICATION URL]:8080/.
+*** what is THE APPLICATION URL?
+
+To see the application, you can go to http://[THE APPLICATION URL]:8080/
 
 To uninstall the application run:
 ```bash
-(cd application && cfy local execute -w uninstall --task-retries=9 --task-retry-interval=10)
+cd application &&
+cfy local execute -w uninstall --task-retries=9 --task-retry-interval=10
 ```
 
 To uninstall the infrastructure:
 ```bash
-(cd infrastructure && cfy local execute -w uninstall --task-retries=9 --task-retry-interval=10)
+cd infrastructure &&
+cfy local execute -w uninstall --task-retries=9 --task-retry-interval=10
 ```
