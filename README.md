@@ -1,3 +1,5 @@
+[![Build Status](https://circleci.com/gh/cloudify-examples/cfy-local-nodejs-mongodb-blueprint.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/cloudify-examples/cfy-local-nodejs-mongodb-blueprint)
+
 # cfy-local-nodejs-mongodb
 
 ## Summary
