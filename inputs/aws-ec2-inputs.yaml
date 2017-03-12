@@ -8,9 +8,9 @@ aws_secret_access_key:
 ## You also need to provide this. There's a good chance that us-east-1 will work for you, so I provided a default.
 ec2_region_name: us-east-1
 ## Especially because I know the AMIs below work in us-east-1.
-database_server_image_id: ami-61bbf104
+database_server_image_id: ami-49c9295f
 database_server_instance_type: m3.medium
-application_server_image_id: ami-61bbf104
+application_server_image_id: ami-49c9295f
 application_server_instance_type: m3.medium
 
 ## The following values have default values, but if you want to use an existing Instance,

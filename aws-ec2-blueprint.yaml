@@ -1,4 +1,4 @@
-tosca_definitions_version: cloudify_dsl_1_2
+tosca_definitions_version: cloudify_dsl_1_3
 
 description: >
   This blueprint uses the cloudify fabric (SSH) plugin to install a
@@ -9,8 +9,8 @@ description: >
   application. It's fine for them all to be on the same machine.
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/3.3/types.yaml
-  - http://www.getcloudify.org/spec/aws-plugin/1.3/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - http://www.getcloudify.org/spec/aws-plugin/1.4.4/plugin.yaml
 
 inputs:
 
