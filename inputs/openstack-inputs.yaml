@@ -17,9 +17,9 @@ neutron_url: ''
 external_network_name:
 
 ## Every Account has a different set of image ids and flavor ids. Check your Account.
-database_server_image_id:
+database_server_image_id: 3edda9cf-11fd-4e4a-8a51-f58b9ad593c2
 database_server_flavor_id:
-application_server_image_id:
+application_server_image_id: 3edda9cf-11fd-4e4a-8a51-f58b9ad593c2
 application_server_flavor_id:
 
 ## The following values have default values, but if you want to use an existing Instance,

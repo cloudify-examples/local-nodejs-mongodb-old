@@ -1,6 +1,6 @@
 [![Build Status](https://circleci.com/gh/cloudify-examples/cfy-local-nodejs-mongodb-blueprint.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/cloudify-examples/cfy-local-nodejs-mongodb-blueprint)
 
-# cfy-local-nodejs-mongodb
+# cfy-local-nodejs-mongodb-blueprint
 
 ## Summary
 
@@ -44,8 +44,8 @@ source /opt/cfy/env/bin/activate
 Get this example:
 
 ```bash
-curl -L -o cfy-local-nodejs-mongodb.zip https://github.com/EarthmanT/cfy-local-nodejs-mongodb/archive/master.zip
-unzip cfy-local-nodejs-mongodb.zip
+curl -L -o cfy-local-nodejs-mongodb-blueprint.zip https://github.com/cloudify-examples/cfy-local-nodejs-mongodb-blueprint/archive/master.zip
+unzip cfy-local-nodejs-mongodb-blueprint.zip
 ```
 
 ### Set up a local environment (no IaaS):
@@ -66,9 +66,10 @@ cat ~/.ssh/cfy_local_keypair.pem > ~/.ssh/authorized_keys
 Running the Blueprint:
 
 ```bash
-cd cfy-local-nodejs-mongodb-master
-cfy local init --install-plugins -p simple-blueprint.yaml
-cfy local execute -w install --task-retries=9 --task-retry-interval=10
+cd cfy-local-nodejs-mongodb-blueprint-master
+cfy local init --install-plugins -p application-blueprint.yaml
+cfy local execute -w install --task-retries=10 --task-retry-interval=10
+cfy local outputs
 ```
 
 Then go to http://YourIPAddress:8080.
